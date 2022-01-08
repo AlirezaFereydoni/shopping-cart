@@ -10,6 +10,7 @@ import { iProduct } from "./types/interfaces";
 
 // components
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
+import DrawerSection from "./components/drawer";
 import { Cart } from "./components/cart";
 import { Badge, Drawer, Grid, LinearProgress } from "@mui/material";
 
@@ -20,11 +21,41 @@ const App: React.FC = () => {
   const [cartItems, setCartItems] = useState<iProduct[]>([]);
   const { data, isLoading, error } = useQuery<iProduct[]>("products", getProducts);
 
-  // const getTotalItem = (items: iProduct[]) => items.reduce((acc: number, item) => acc + item);
   const addToCartHandler = (clickedItem: iProduct) => {
-    setCartItems([...cartItems, clickedItem]);
+    let isExist: boolean = false;
+    let ExistItem: iProduct = {} as iProduct;
+
+    for (const i in cartItems) {
+      if (cartItems[i].id === clickedItem.id) {
+        isExist = true;
+        ExistItem = cartItems[i];
+      }
+    }
+
+    if (isExist) {
+      setCartItems([...cartItems, { ...clickedItem, amount: ExistItem.amount! + 1 }]);
+    } else {
+      setCartItems([...cartItems, { ...clickedItem, amount: 1 }]);
+    }
   };
-  // const remoteFromCartHandler = () => null
+
+  const removeFromCartHandler = (cartId: number) => {
+    for (const i in cartItems) {
+      if (cartItems[i].id === cartId && cartItems[i].amount === 1) {
+        setCartItems([...cartItems.splice(Number(i), 1)]);
+        return;
+      }
+
+      if (cartItems[i].id === cartId && cartItems[i].amount! > 1) {
+        setCartItems([
+          ...cartItems.splice(Number(i), 1, { ...cartItems[i], amount: cartItems[i].amount! - 1 }),
+        ]);
+        return;
+      }
+    }
+  };
+
+  const getTotalItems = (items: iProduct[]) => items.reduce((acc, item) => acc + item.amount!, 0);
 
   if (isLoading) return <LinearProgress />;
   if (error) return <div>something went wrong...</div>;
@@ -32,11 +63,15 @@ const App: React.FC = () => {
   return (
     <AppWrapper>
       <Drawer anchor="right" open={isOpen} onClose={() => setIsOpen(false)}>
-        Cart goes here
+        <DrawerSection
+          items={cartItems}
+          addToCart={addToCartHandler}
+          removeFromCart={removeFromCartHandler}
+        />
       </Drawer>
 
       <StyledButton onClick={() => setIsOpen(true)}>
-        <Badge badgeContent={cartItems.length} color="error">
+        <Badge badgeContent={getTotalItems(cartItems)} color="error">
           <AddShoppingCartIcon />
         </Badge>
       </StyledButton>

@@ -10,7 +10,7 @@ interface iCard {
   add: (clickedItem: iProduct) => void;
 }
 
-const CartItem: React.FC<iCard> = ({ item, add }) => {
+const Cart: React.FC<iCard> = ({ item, add }) => {
   return (
     <CardWrapper>
       <img src={item.image} alt={item.title} />
@@ -25,4 +25,4 @@ const CartItem: React.FC<iCard> = ({ item, add }) => {
   );
 };
 
-export { CartItem };
+export { Cart };
