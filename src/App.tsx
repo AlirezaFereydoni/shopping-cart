@@ -1,5 +1,5 @@
 // hooks
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "react-query";
 
 // styles
@@ -19,43 +19,50 @@ const getProducts = async () => await (await fetch("https://fakestoreapi.com/pro
 const App: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [cartItems, setCartItems] = useState<iProduct[]>([]);
+  const [total, setTotal] = useState(0);
   const { data, isLoading, error } = useQuery<iProduct[]>("products", getProducts);
 
-  const addToCartHandler = (clickedItem: iProduct) => {
-    let isExist: boolean = false;
-    let ExistItem: iProduct = {} as iProduct;
+  useEffect(() => {
+    setTotal(cartItems.reduce((acc, item) => acc + item.amount!, 0));
+  }, [cartItems]);
 
-    for (const i in cartItems) {
-      if (cartItems[i].id === clickedItem.id) {
+  const addToCartHandler = (clickedItem: iProduct) => {
+    let itemsInstance = [...cartItems];
+    let isExist: boolean = false;
+
+    for (const i in itemsInstance) {
+      if (itemsInstance[i].id === clickedItem.id) {
+        itemsInstance.splice(Number(i), 1, {
+          ...itemsInstance[i],
+          amount: itemsInstance[i].amount! + 1,
+        });
         isExist = true;
-        ExistItem = cartItems[i];
+        break;
       }
     }
 
-    if (isExist) {
-      setCartItems([...cartItems, { ...clickedItem, amount: ExistItem.amount! + 1 }]);
-    } else {
+    if (!isExist) {
       setCartItems([...cartItems, { ...clickedItem, amount: 1 }]);
+    } else {
+      setCartItems(itemsInstance);
     }
   };
 
   const removeFromCartHandler = (cartId: number) => {
     for (const i in cartItems) {
       if (cartItems[i].id === cartId && cartItems[i].amount === 1) {
-        setCartItems([...cartItems.splice(Number(i), 1)]);
+        setCartItems([...cartItems.filter(item => item.id !== cartId)]);
         return;
       }
 
       if (cartItems[i].id === cartId && cartItems[i].amount! > 1) {
-        setCartItems([
-          ...cartItems.splice(Number(i), 1, { ...cartItems[i], amount: cartItems[i].amount! - 1 }),
-        ]);
+        let itemsCopy = [...cartItems];
+        itemsCopy.splice(Number(i), 1, { ...cartItems[i], amount: cartItems[i].amount! - 1 });
+        setCartItems(itemsCopy);
         return;
       }
     }
   };
-
-  const getTotalItems = (items: iProduct[]) => items.reduce((acc, item) => acc + item.amount!, 0);
 
   if (isLoading) return <LinearProgress />;
   if (error) return <div>something went wrong...</div>;
@@ -71,7 +78,7 @@ const App: React.FC = () => {
       </Drawer>
 
       <StyledButton onClick={() => setIsOpen(true)}>
-        <Badge badgeContent={getTotalItems(cartItems)} color="error">
+        <Badge badgeContent={total} color="error">
           <AddShoppingCartIcon />
         </Badge>
       </StyledButton>
