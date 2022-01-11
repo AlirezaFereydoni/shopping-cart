@@ -14,6 +14,9 @@ interface iDrawer {
 }
 
 const Drawer: React.FC<iDrawer> = ({ items, addToCart, removeFromCart }) => {
+  const calculationTotalPrice = () =>
+    items.reduce((acc, item) => acc + item.amount! * item.price, 0);
+
   return (
     <DrawerWrapper>
       <h2>Your Shopping Cart</h2>
@@ -26,6 +29,8 @@ const Drawer: React.FC<iDrawer> = ({ items, addToCart, removeFromCart }) => {
           removeFromCart={removeFromCart}
         />
       ))}
+
+      <p>Total price:$ {calculationTotalPrice()}</p>
     </DrawerWrapper>
   );
 };
